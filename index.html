@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Colorful Animated Calculator</title>
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --btn-gradient-op: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+      --btn-gradient-num: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+      --btn-gradient-eq: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+      --btn-gradient-sc: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+      --dark-bg: #1e1e2f;
+      --dark-panel: #2e2e42;
+      --dark-display: #44475a;
+      --dark-text: #f8f8f2;
+    }
+
+    * {
+      box-sizing: border-box;
+      padding: 0;
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-gradient);
+      transition: background 0.3s ease;
+    }
+
+    body.dark-mode {
+      background: var(--dark-bg);
+    }
+
+    .calculator {
+      width: 340px;
+      background: #ffffff33;
+      backdrop-filter: blur(10px);
+      border-radius: 25px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+      padding: 20px;
+      transition: background 0.3s ease;
+    }
+
+    body.dark-mode .calculator {
+      background: var(--dark-panel);
+    }
+
+    #display {
+      width: 100%;
+      height: 60px;
+      border: none;
+      border-radius: 15px;
+      margin-bottom: 15px;
+      padding: 15px;
+      font-size: 1.8rem;
+      text-align: right;
+      background: #ffffff88;
+      box-shadow: inset 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    body.dark-mode #display {
+      background: var(--dark-display);
+      color: var(--dark-text);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    button {
+      position: relative;
+      padding: 20px;
+      border: none;
+      border-radius: 15px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #333;
+      overflow: hidden;
+      transition: transform 0.15s ease;
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+    .num {
+      background: var(--btn-gradient-num);
+    }
+
+    .op {
+      background: var(--btn-gradient-op);
+    }
+
+    .eq {
+      background: var(--btn-gradient-eq);
+    }
+
+    .sc {
+      background: var(--btn-gradient-sc);
+    }
+
+    .dark-toggle {
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .dark-toggle button {
+      padding: 10px 20px;
+      border-radius: 8px;
+      background: #444;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* Ripple effect */
+    button span.ripple {
+      position: absolute;
+      border-radius: 50%;
+      transform: scale(0);
+      animation: rip 0.6s linear;
+      background: rgba(255, 255, 255, 0.7);
+    }
+
+    @keyframes rip {
+      to {
+        transform: scale(4);
+        opacity: 0;
+      }
+    }
+
+    @keyframes flash {
+      0% {
+        background: #ffffff88;
+      }
+
+      50% {
+        background: #fffbe6;
+      }
+
+      100% {
+        background: #ffffff88;
+      }
+    }
+
+    .flash {
+      animation: flash 0.6s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <input type="text" id="display" disabled>
+    <div class="grid">
+      <button class="op" data-action="clear">C</button>
+      <button class="op" data-value="/">÷</button>
+      <button class="op" data-value="*">×</button>
+      <button class="op" data-action="delete">⌫</button>
+
+      <button class="num" data-value="7">7</button>
+      <button class="num" data-value="8">8</button>
+      <button class="num" data-value="9">9</button>
+      <button class="op" data-value="-">−</button>
+
+      <button class="num" data-value="4">4</button>
+      <button class="num" data-value="5">5</button>
+      <button class="num" data-value="6">6</button>
+      <button class="op" data-value="+">+</button>
+
+      <button class="num" data-value="1">1</button>
+      <button class="num" data-value="2">2</button>
+      <button class="num" data-value="3">3</button>
+      <button class="eq" data-action="equals">=</button>
+
+      <button class="num" data-value="0" style="grid-column: span 2;">0</button>
+      <button class="num" data-value=".">.</button>
+      <button class="sc" data-value="Math.sqrt(">√</button>
+    </div>
+    <div class="dark-toggle">
+      <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+    </div>
+  </div>
+
+  <script>
+    const display = document.getElementById('display');
+    const buttons = document.querySelectorAll('button');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', e => {
+        createRipple(e);
+        const action = btn.dataset.action;
+        const value = btn.dataset.value;
+        if (action === 'clear') return clearDisplay();
+        if (action === 'delete') return deleteLast();
+        if (action === 'equals') return calculate();
+        append(value);
+      });
+    });
+
+    document.addEventListener('keydown', e => {
+      if ((/[\d+\-*/.()]/.test(e.key)) || e.key === 'Enter' || e.key === 'Backspace' || e.key === 'Delete') {
+        e.preventDefault();
+        if (e.key === 'Enter') return calculate();
+        if (e.key === 'Backspace') return deleteLast();
+        if (e.key === 'Delete') return clearDisplay();
+        append(e.key);
+      }
+    });
+
+    function append(val) {
+      display.value += val;
+    }
+
+    function clearDisplay() {
+      display.value = '';
+    }
+
+    function deleteLast() {
+      display.value = display.value.slice(0, -1);
+    }
+
+    function calculate() {
+      try {
+        const result = eval(display.value);
+        display.classList.add('flash');
+        setTimeout(() => display.classList.remove('flash'), 600);
+        display.value = result;
+      } catch (err) {
+        display.value = 'Error';
+      }
+    }
+
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    function createRipple(e) {
+      const circle = document.createElement('span');
+      const diameter = Math.max(e.target.clientWidth, e.target.clientHeight);
+      const radius = diameter / 2;
+      circle.style.width = circle.style.height = `${diameter}px`;
+      circle.style.left = `${e.clientX - e.target.getBoundingClientRect().left - radius}px`;
+      circle.style.top = `${e.clientY - e.target.getBoundingClientRect().top - radius}px`;
+      circle.classList.add('ripple');
+      const ripple = e.target.getElementsByClassName('ripple')[0];
+      if (ripple) ripple.remove();
+      e.target.appendChild(circle);
+    }
+  </script>
+</body>
+</html>
